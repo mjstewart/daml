@@ -10,3 +10,4 @@ HEAD — ongoing
 --------------
 
 + [Sandbox] The sandbox now properly sets the connection pool properties ``minimumIdle``, ``maximumPoolSize``, and ``connectionTimeout``.
++ [Ledger] H2 Database support in the Ledger API Server.
