@@ -150,7 +150,7 @@ class DecodeV1Spec
         TFun(TText, TNumeric.cons),
     )
 
-    "translate TDecimal to TApp(TNumeric, TNat(10))" + in {
+    "translate TDecimal to TApp(TNumeric, TNat(10))" in {
       forEvery(preNumericMinVersions) { version =>
         val decoder = moduleDecoder(version)
         forEvery(decimalTestCases) { (input, expectedOutput) =>
