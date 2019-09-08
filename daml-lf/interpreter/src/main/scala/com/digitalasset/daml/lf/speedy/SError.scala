@@ -111,6 +111,10 @@ object SError {
   /** The transaction produced by the update expression in a 'mustFailAt' succeeded. */
   final case class ScenarioErrorMustFailSucceeded(tx: Transaction) extends SErrorScenario
 
+  final case class ScenarioErrorMustFailUnexpectedMsg(result: AssertMsgResult) extends SErrorScenario
+
   /** Invalid party name supplied to 'getParty'. */
   final case class ScenarioErrorInvalidPartyName(name: String, msg: String) extends SErrorScenario
+
+  final case class AssertMsgResult(expected: String, actual: String)
 }

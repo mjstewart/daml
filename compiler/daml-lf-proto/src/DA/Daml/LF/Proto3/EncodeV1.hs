@@ -398,6 +398,18 @@ encodeScenario encctx = P.Scenario . Just . \case
         (encodeExpr encctx smustFailAtParty)
         (encodeExpr encctx smustFailAtExpr)
         (encodeType encctx smustFailAtType)
+    SCommitAbortMsg{..} ->
+      P.ScenarioSumCommitAbortMsg $ P.Scenario_CommitAbortMsg
+        (encodeExpr encctx scommitAbortMsgParty)
+        (encodeExpr encctx scommitAbortMsgExpect)
+        (encodeExpr encctx scommitAbortMsgExpr)
+        (encodeType encctx scommitAbortMsgType)
+    SMustFailAtMsg{..} ->
+      P.ScenarioSumMustFailAtMsg $ P.Scenario_CommitAbortMsg
+        (encodeExpr encctx smustFailAtMsgParty)
+        (encodeExpr encctx smustFailAtMsgExpect)
+        (encodeExpr encctx smustFailAtMsgExpr)
+        (encodeType encctx smustFailAtMsgType)
     SPass{..} ->
       P.ScenarioSumPass (encodeExpr' encctx spassDelta)
     SGetTime -> P.ScenarioSumGetTime P.Unit

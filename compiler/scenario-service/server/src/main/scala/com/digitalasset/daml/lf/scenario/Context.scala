@@ -166,7 +166,8 @@ class Context(val contextId: Context.ContextId) {
       (lfVer, defn) = res
     } yield
     // note that the use of `Map#mapValues` here is intentional: we lazily project the
-    // definition out rather than rebuilding the map.
+    // definition out rather than rebuilding the map
+      
     Speedy.Machine
       .build(
         checkSubmitterInMaintainers = VersionTimeline.checkSubmitterInMaintainers(lfVer),
@@ -178,16 +179,25 @@ class Context(val contextId: Context.ContextId) {
   def interpretScenario(
       pkgId: String,
       name: String
-  ): Option[(Ledger, Speedy.Machine, Either[SError, SValue])] =
+  ): Option[(Ledger, Speedy.Machine, Either[SError, SValue])] = {
+
+    val x = assert(PackageId.fromString(pkgId))
+    val y = assert(QualifiedName.fromString(name))
+
+    println(s"interpretScenario: pkgId=$pkgId, then ->  $x")
+    println(s"interpretScenario: name=$name, then -> $y")
+
     buildMachine(
-      Identifier(assert(PackageId.fromString(pkgId)), assert(QualifiedName.fromString(name))))
-      .map { machine =>
-        ScenarioRunner(machine).run() match {
-          case Right((diff @ _, steps @ _, ledger)) =>
-            (ledger, machine, Right(machine.toSValue))
-          case Left((err, ledger)) =>
-            (ledger, machine, Left(err))
-        }
-      }
+    Identifier(assert(PackageId.fromString(pkgId)), assert(QualifiedName.fromString(name))))
+    .map { machine =>
+    ScenarioRunner(machine).run() match {
+    case Right((diff @ _, steps @ _, ledger)) =>
+    (ledger, machine, Right(machine.toSValue))
+    case Left((err, ledger)) =>
+    (ledger, machine, Left(err))
+  }
+  }
+  }
+
 
 }

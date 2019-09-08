@@ -117,6 +117,13 @@ case class Conversions(homePackageId: Ref.PackageId) {
       case SError.ScenarioErrorMustFailSucceeded(tx @ _) =>
         builder.setScenarioMustfailSucceeded(empty)
 
+      case SError.ScenarioErrorMustFailUnexpectedMsg(SError.AssertMsgResult(expected, actual)) =>
+        builder.setScenarioMustfailUnexpectedMsg(
+          ScenarioError.AssertMsgResult.newBuilder
+            .setExpected(expected)
+            .setActual(actual)
+            .build)
+
       case SError.ScenarioErrorInvalidPartyName(party, _) =>
         builder.setScenarioInvalidPartyName(party)
 

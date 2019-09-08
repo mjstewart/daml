@@ -560,6 +560,27 @@ data Scenario
     , smustFailAtExpr :: !Expr
     -- ^ The expression that yields the update action.
     }
+  | SCommitAbortMsg
+    { scommitAbortMsgType :: !Type
+    -- ^ Type of the update to commit.
+    , scommitAbortMsgParty :: !Expr
+    -- ^ The committing party.
+    , scommitAbortMsgExpect :: !Expr
+    -- ^ The expected error message
+    , scommitAbortMsgExpr :: !Expr
+    -- ^ The expression that yields the update action.
+    }
+  -- | TODO - writing something meaningful
+  | SMustFailAtMsg
+    { smustFailAtMsgType :: !Type
+    -- ^ Type of the update to commit.
+    , smustFailAtMsgParty :: !Expr
+    -- ^ The committing party.
+    , smustFailAtMsgExpect :: !Expr
+    -- ^ The error message to assert on
+    , smustFailAtMsgExpr :: !Expr
+    -- ^ The expression that yields the update action.
+    }
   -- | Move the time forward.
   | SPass
     { spassDelta :: !Expr

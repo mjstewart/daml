@@ -125,7 +125,8 @@ object Pretty {
       case ScenarioErrorMustFailSucceeded(tx @ _) =>
         // TODO(JM): Further info needed. Location annotations?
         text("due to a mustfailAt that succeeded.")
-
+      case ScenarioErrorMustFailUnexpectedMsg(AssertMsgResult(expected, actual)) =>
+        text(s"due to a mustfailAt that has unexpected fail message: expected=$expected, actual=$actual")
       case ScenarioErrorInvalidPartyName(_, msg) => text(s"Invalid party: $msg")
     })
 

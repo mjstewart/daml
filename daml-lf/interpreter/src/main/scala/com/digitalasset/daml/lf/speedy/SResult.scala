@@ -69,6 +69,11 @@ object SResult {
       callback: Unit => Unit
   ) extends SResult
 
+  final case class SResultScenarioMustFailMsg(
+      result: AssertMsgResult
+  ) extends SResult
+
+
   /** Pass the ledger time and return back the new ledger time. */
   final case class SResultScenarioPassTime(
       relTime: Long,

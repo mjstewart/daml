@@ -12,6 +12,7 @@ import io.grpc.{ServerBuilder, Status, StatusRuntimeException}
 
 import scala.collection.JavaConverters._
 import scala.util.control.NonFatal
+import com.digitalasset.daml.lf.speedy.SError
 
 object ScenarioServiceMain extends App {
   // default to 128MB
@@ -86,12 +87,25 @@ class ScenarioService extends ScenarioServiceGrpc.ScenarioServiceImplBase {
                 val builder = RunScenarioResponse.newBuilder
                 errOrValue match {
                   case Left(err) =>
+                    println("interpretScenario LEFT $$$$$$$$$$$$$$$$$$$$$$$ err = ")
+                    println(s"scenarioId.getName = $scenarioId.getName" )
+                    println(err)
+                    err match {
+                      case SError.DamlEUserError(msg) =>
+                        println(s"CASE match for SError.DamlEUserError(msg) is msg=$msg")
+                      case _ =>
+                        println("OTHER")
+                    }
+
                     builder.setError(
                       Conversions(context.homePackageId)
                         .convertScenarioError(ledger, machine, err)
                     )
                   case Right(value) =>
+                    println("interpretScenario RIGHT $$$$$$$$$$$$$$$$$$$$$$$ value = ")
+
                     val conv = Conversions(context.homePackageId)
+
                     builder.setResult(conv.convertScenarioResult(ledger, machine, value))
                 }
                 builder.build

@@ -105,6 +105,10 @@ private[validation] case class TypeSubst(map: Map[TypeVarName, Type], private va
       ScenarioCommit(apply(party), apply(update), apply(typ))
     case ScenarioMustFailAt(party, update, typ) =>
       ScenarioMustFailAt(apply(party), apply(update), apply(typ))
+    case ScenarioCommitAbortMsg(party, expectMsg, update, typ) =>
+      ScenarioCommitAbortMsg(apply(party), apply(expectMsg), apply(update), apply(typ))
+    case ScenarioMustFailAtMsg(party, expectMsg, update, typ) =>
+      ScenarioMustFailAtMsg(apply(party), apply(expectMsg), apply(update), apply(typ))
     case ScenarioPass(delta) =>
       ScenarioPass(apply(delta))
     case ScenarioEmbedExpr(typ, exp) =>

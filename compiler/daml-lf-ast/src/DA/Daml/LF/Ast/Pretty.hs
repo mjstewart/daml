@@ -344,6 +344,10 @@ instance Pretty Scenario where
       prettyAppKeyword lvl prec "commit" [TyArg typ, TmArg actor, TmArg upd]
     SMustFailAt typ actor upd ->
       prettyAppKeyword lvl prec "must_fail_at" [TyArg typ, TmArg actor, TmArg upd]
+    SCommitAbortMsg typ actor expectMsg upd ->
+      prettyAppKeyword lvl prec "commit_abort_msg" [TyArg typ, TmArg actor, TmArg expectMsg, TmArg upd]
+    SMustFailAtMsg typ actor expectMsg upd ->
+      prettyAppKeyword lvl prec "must_fail_at_msg" [TyArg typ, TmArg actor, TmArg expectMsg, TmArg upd]
     SPass delta ->
       prettyAppKeyword lvl prec "pass" [TmArg delta]
     SGetTime ->

@@ -246,9 +246,17 @@ prettyScenarioErrorError (Just err) =  do
         , "Effective at:"
         <-> prettyTimestamp scenarioError_ContractNotEffectiveEffectiveAt
         ]
-
     ScenarioErrorErrorScenarioMustfailSucceeded _ ->
       pure "A must-fail commit succeeded."
+    -- TODO: print on new lines
+    -- try (TL.toStrict node_LookupByKeyContractId)
+    -- actual type ‘TL.Text’
+    ScenarioErrorErrorScenarioMustfailUnexpectedMsg ScenarioError_AssertMsgResult{..} ->
+      pure $ vcat
+        [ "A must-fail commit aborted due to an unexpected failure message"
+         , label_ "expected:" (char '"' <> text (TL.toStrict scenarioError_AssertMsgResultExpected) <> char '"')
+         , label_ "actual:" (char '"' <> text (TL.toStrict scenarioError_AssertMsgResultActual) <> char '"')
+        ]
     ScenarioErrorErrorScenarioInvalidPartyName name ->
       pure $ "Invalid party name: " <-> ltext name
     ScenarioErrorErrorScenarioContractNotVisible ScenarioError_ContractNotVisible{..} ->

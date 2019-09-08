@@ -74,6 +74,8 @@ freeVarsStep = \case
       SBindF b s -> fvBinding b s
       SCommitF _ s1 s2 -> s1 <> s2
       SMustFailAtF _ s1 s2 -> s1 <> s2
+      SCommitAbortMsgF _ expectMsg s1 s2 -> expectMsg <> s1 <> s2
+      SMustFailAtMsgF _ expectMsg s1 s2 -> expectMsg <> s1 <> s2
       SPassF s -> s
       SGetTimeF -> mempty
       SGetPartyF s -> s

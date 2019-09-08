@@ -322,6 +322,12 @@ private[digitalasset] class EncodeV1(val minor: LV.Minor) {
         case ScenarioMustFailAt(party, update, retType) =>
           builder.setMustFailAt(
             PLF.Scenario.Commit.newBuilder().setParty(party).setExpr(update).setRetType(retType))
+        case ScenarioCommitAbortMsg(party, expectMsg, update, retType) =>
+          builder.setCommitAbortMsg(
+            PLF.Scenario.CommitAbortMsg.newBuilder().setParty(party).setExpectMsg(expectMsg).setExpr(update).setRetType(retType))
+        case ScenarioMustFailAtMsg(party, expectMsg, update, retType) =>
+          builder.setMustFailAtMsg(
+            PLF.Scenario.CommitAbortMsg.newBuilder().setParty(party).setExpectMsg(expectMsg).setExpr(update).setRetType(retType))
         case ScenarioPass(relTime) =>
           builder.setPass(relTime)
         case ScenarioGetTime =>

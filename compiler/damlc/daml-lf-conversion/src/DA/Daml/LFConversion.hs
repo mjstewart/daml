@@ -669,6 +669,12 @@ convertExpr env0 e = do
         upd' <- convertExpr env upd
         typ' <- convertType env typ
         pure $ EScenario (SMustFailAt typ' pty' (EUpdate (UEmbedExpr typ' upd')))
+    go env (VarIs "submitMustFailMsg") (LType typ : LExpr pty : LExpr msg : LExpr upd : args) = fmap (, args) $ do
+        pty' <- convertExpr env pty
+        msg' <- convertExpr env msg
+        upd' <- convertExpr env upd
+        typ' <- convertType env typ
+        pure $ EScenario (SMustFailAtMsg typ' pty' msg' (EUpdate (UEmbedExpr typ' upd')))
 
     -- custom conversion because they correspond to builtins in DAML-LF, so can make the output more readable
     go env (VarIs "pure") (LType monad : LExpr dict : LType t : LExpr x : args)

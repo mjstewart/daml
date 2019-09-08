@@ -121,7 +121,7 @@
         },
         {
           "name": "entity.name.function",   
-          "match": "\\b(pure|return|assert|create|mustFailAt|fromRelTime|toRelTime|fromInteger|toInteger|pass|toText|singleton|unpack|divD|remD|round|cons|nil|subTime|addRelTime)\\b"
+          "match": "\\b(pure|return|assert|create|mustFailAt|mustFailAtMsg|fromRelTime|toRelTime|fromInteger|toInteger|pass|toText|singleton|unpack|divD|remD|round|cons|nil|subTime|addRelTime)\\b"
         },
         {
           "name": "keyword.operator.daml",

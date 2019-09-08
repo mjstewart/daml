@@ -330,6 +330,7 @@ final class Engine {
           ()
 
         case SResultError(err) =>
+          println(s"Engine.scala interpretLoop SResultError(err) $err")
           return ResultError(
             Error(
               s"Interpretation error: ${Pretty.prettyError(err, machine.ptx).render(80)}",
@@ -381,6 +382,8 @@ final class Engine {
           return ResultError(Error("unexpected ScenarioInsertMustFail"))
         case _: SResultScenarioMustFail =>
           return ResultError(Error("unexpected ScenarioMustFail"))
+        case _: SResultScenarioMustFailMsg =>
+          return ResultError(Error("unexpected ScenarioMustFailMsg"))
         case _: SResultScenarioPassTime =>
           return ResultError(Error("unexpected ScenarioPassTime"))
         case _: SResultScenarioGetParty =>

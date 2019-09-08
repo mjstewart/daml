@@ -915,6 +915,17 @@ message Scenario {
     Type ret_type = 3;
   }
 
+  message CommitAbortMsg {
+    // committing party
+    Expr party = 1;
+    
+    Expr expect_msg = 2;
+    // the expected error message
+
+    Expr expr = 3;
+    // type of result
+    Type ret_type = 4;
+  }
   message EmbedExpr {
     Type type = 1;
     Expr body = 2;
@@ -939,6 +950,8 @@ message Scenario {
     // case, the `if` will be executed every time the scenario runs --
     // as expected.
     EmbedExpr embed_expr = 8;
+    CommitAbortMsg commitAbortMsg = 9;
+    CommitAbortMsg mustFailAtMsg = 10;
   }
 }
 

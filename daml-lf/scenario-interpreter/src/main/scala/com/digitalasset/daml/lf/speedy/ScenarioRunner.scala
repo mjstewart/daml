@@ -34,10 +34,14 @@ final case class ScenarioRunner(
   def run(): Either[(SError, Ledger), (Double, Int, Ledger)] =
     Try(runUnsafe) match {
       case Failure(SRunnerException(err)) =>
+        println(s"ScenarioRunner.run case Failure(SRunnerException(err)): $err")
         Left((err, ledger))
       case Failure(other) =>
+        println(s"ScenarioRunner.run case Failure(other): $other")
+
         throw other
       case Success(res) =>
+        println(s"ScenarioRunner.run case Success(res): $res")
         Right(res)
     }
 
@@ -52,6 +56,8 @@ final case class ScenarioRunner(
         case SResultContinue =>
           steps += 1
         case SResultError(err) =>
+          println(s"ScenarioRunner.runUnsafe SResultError: $err")
+          println(s"ScenarioRunner.runUnsafe Interpretation error: ${Pretty.prettyError(err, machine.ptx).render(80)}")
           throw SRunnerException(err)
 
         case SResultMissingDefinition(ref, _) =>
@@ -64,10 +70,16 @@ final case class ScenarioRunner(
           callback(ledger.currentTime)
 
         case SResultScenarioMustFail(tx, committers, callback) =>
+          println(s"ScenarioRunner.runUnsafe SResultScenarioMustFail: $tx")
           mustFail(tx, committers)
           callback(())
 
+        case SResultScenarioMustFailMsg(result) =>
+          println(s"ScenarioRunner.runUnsafe SResultScenarioMustFailMsg result=: $result")
+          throw SRunnerException(ScenarioErrorMustFailUnexpectedMsg(result))
+
         case SResultScenarioCommit(value, tx, committers, callback) =>
+          println(s"ScenarioRunner.runUnsafe SResultScenarioCommit: value= $value")
           commit(value, tx, committers, callback)
 
         case SResultScenarioPassTime(delta, callback) =>
@@ -77,6 +89,9 @@ final case class ScenarioRunner(
           val committer =
             if (committers.size == 1) committers.head else crashTooManyCommitters(committers)
 
+          println(s"ScenarioRunner.runUnsafe SResultScenarioInsertMustFail: committers=$committers, optLocation=$optLocation")
+
+          println(s"Last location: ${Pretty.prettyLoc(machine.lastLocation).render(80)}, partial transaction: ${machine.ptx.nodesToString}")
           ledger = ledger.insertAssertMustFail(committer, optLocation)
         }
 
@@ -104,6 +119,7 @@ final case class ScenarioRunner(
   }
 
   private def mustFail(tx: Transaction, committers: Set[Party]) = {
+    println(s"ScenarioRunner.mustFail tx=$tx")
     // Update expression evaluated successfully,
     // however we might still have an authorization failure.
     val committer =
@@ -117,9 +133,34 @@ final case class ScenarioRunner(
           tr = tx,
           l = ledger)
         .isRight) {
+      println(s"ScenarioRunner.mustFail throw SRunnerException: ${SRunnerException(ScenarioErrorMustFailSucceeded(tx))}")
       throw SRunnerException(ScenarioErrorMustFailSucceeded(tx))
     }
     ledger = ledger.insertAssertMustFail(committer, machine.commitLocation)
+  }
+
+        // TODO: just reuse mustFail but use default arg for result with null? if not null then call SRunnerException with
+        // corresponding exception type
+  private def mustFailMsg(committers: Set[Party], result: AssertMsgResult) = {
+    println(s"ScenarioRunner.mustFailMsg")
+    throw SRunnerException(ScenarioErrorMustFailUnexpectedMsg(result))
+    // Update expression evaluated successfully,
+    // however we might still have an authorization failure.
+//    val committer =
+//    if (committers.size == 1) committers.head else crashTooManyCommitters(committers)
+//
+//    if (Ledger
+//      .commitTransaction(
+//        committer = committer,
+//        effectiveAt = ledger.currentTime,
+//        optLocation = machine.commitLocation,
+//        tr = tx,
+//        l = ledger)
+//      .isRight) {
+//      println(s"ScenarioRunner.mustFailMsg throw SRunnerException(ScenarioErrorMustFailUnexpectedMsg(tx, result)): ${SRunnerException(ScenarioErrorMustFailUnexpectedMsg(tx, result))}")
+//      throw SRunnerException(ScenarioErrorMustFailUnexpectedMsg(tx, result))
+//    }
+//    ledger = ledger.insertAssertMustFail(committer, machine.commitLocation)
   }
 
   private def commit(
@@ -138,6 +179,7 @@ final case class ScenarioRunner(
       l = ledger
     ) match {
       case Left(fas) =>
+        println(s"ScenarioRunner.scala commit Left(fas): ${SRunnerException(ScenarioErrorCommitError(fas))}")
         throw SRunnerException(ScenarioErrorCommitError(fas))
       case Right(result) =>
         ledger = result.newLedger

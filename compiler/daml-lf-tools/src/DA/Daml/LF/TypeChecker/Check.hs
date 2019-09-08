@@ -448,6 +448,19 @@ typeOfScenario = \case
     checkExpr party TParty
     checkExpr update (TUpdate typ)
     pure (TScenario TUnit)
+  SCommitAbortMsg typ party expectMsg update -> do
+    checkType typ KStar
+    checkExpr party TParty
+    checkExpr expectMsg TText
+    checkExpr' update (TUpdate typ) >>= \case
+      TUpdate t -> pure (TScenario t)
+      t -> throwWithContext (EExpectedUpdateType t)
+  SMustFailAtMsg typ party expectMsg update -> do
+    checkType typ KStar
+    checkExpr party TParty
+    checkExpr expectMsg TText
+    checkExpr update (TUpdate typ)
+    pure (TScenario TUnit)
   SPass delta -> checkExpr delta TInt64 $> TScenario TTimestamp
   SGetTime -> pure (TScenario TTimestamp)
   SGetParty name -> checkExpr name TText $> TScenario TParty

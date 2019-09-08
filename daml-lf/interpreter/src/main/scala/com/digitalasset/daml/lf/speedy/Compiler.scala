@@ -624,6 +624,32 @@ final case class Compiler(packages: PackageId PartialFunction Package) {
             }
         }
 
+      case ScenarioCommitAbortMsg(partyE, _, updateE, _retType @ _) =>
+        // let party = <partyE>
+        //     update = <updateE>
+        // in \token ->
+        //   let _ = $beginCommit party token
+        //       r = update token
+        //   in $endCommit[mustFail = false] r token
+        withEnv { _ =>
+          val party = translate(partyE)
+          env = env.incrPos // party
+          val update = translate(updateE)
+          env = env.incrPos // update
+          env = env.incrPos // $beginCommit
+          SELet(party, update) in
+            SEAbs(1) {
+              SELet(
+                // stack: <party> <update> <token>
+                SBSBeginCommit(optLoc)(SEVar(3), SEVar(1)),
+                // stack: <party> <update> <token> ()
+                SEApp(SEVar(3), Array(SEVar(2))),
+                // stack: <party> <update> <token> () result
+              ) in
+                SBSEndCommit(false)(SEVar(1), SEVar(3))
+            }
+        }
+
       case ScenarioMustFailAt(partyE, updateE, _retType @ _) =>
         // \token ->
         //   let _ = $beginCommit <party> token
@@ -639,6 +665,27 @@ final case class Compiler(packages: PackageId PartialFunction Package) {
               SBSBeginCommit(optLoc)(party, SEVar(1)),
               SECatch(SEApp(update, Array(SEVar(2))), SEValue(SBool(true)), SEValue(SBool(false)))
             ) in SBSEndCommit(true)(SEVar(1), SEVar(3))
+          }
+        }
+
+      case ScenarioMustFailAtMsg(partyE, expectMsgE, updateE, _retType @ _) =>
+        // \token ->
+        //   let _ = $beginCommit <party> token
+        //       r = $catch (<updateE> token) true false
+        //   in $endCommit[mustFail = true] r token
+
+        // TODO: pass in expectMsg into SBSEndCommit, within SBuiltin.scala
+        withEnv { _ =>
+          env = env.incrPos // token
+          val party = translate(partyE)
+          val expectMsg = translate(expectMsgE)
+          env = env.incrPos // $beginCommit
+          val update = translate(updateE)
+          SEAbs(1) {
+            SELet(
+              SBSBeginCommit(optLoc)(party, SEVar(1)),
+              SECatch(SEApp(update, Array(SEVar(2))), SEValue(SBool(true)), SEValue(SBool(false)))
+            ) in SBSEndCommitMustFailMsg(expectMsg)(SEVar(1), SEVar(3))
           }
         }
 

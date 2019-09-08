@@ -58,6 +58,11 @@ object Speedy {
       traceLog: TraceLog,
       /* Compiled packages (DAML-LF ast + compiled speedy expressions). */
       var compiledPackages: CompiledPackages,
+
+      /* DamlEUserError change to lastDamlEUserErrorMsg */
+      var lastErrorMsg: String,
+
+      var expectedAbortMsg: String
   ) {
 
     def kontPop(): Kont = kont.remove(kont.size - 1)
@@ -111,19 +116,47 @@ object Speedy {
         // Set control to crash as it must be reset after execution. This guards
         // against e.g. buggy builtin operations which do not set control and could
         // then not advance the machine state.
+
+        // TODO: this part here is IMPORTANT. try execute it, but then the SECatch will try handle it
         ctrl = CtrlCrash(ctrlToExecute)
+        println(s"Speedy.scala.step about to execute ctrlToExecute.execute(this)")
         ctrlToExecute.execute(this)
+        println(s"Speedy.scala.step return SResultContinue")
         SResultContinue
       } catch {
         case SpeedyHungry(res: SResult) =>
+          println(s"Speedy.scala.step case SpeedyHungry(res: SResult) : $res")
+          println(s"Speedy.scala.step case SpeedyHungry(res: SResult) ctrl: $ctrl")
           res
 
-        case serr: SError =>
+        case serr: SError => {
+          println(s"Speedy.scala.step catch block serr: $serr")
+          println(s"Speedy.scala.step catch block val   = ctrl: $ctrl")
+
           serr match {
-            case _: SErrorDamlException if tryHandleException =>
-              SResultContinue
-            case _ => SResultError(serr)
+            case SError.DamlEUserError(msg) =>
+              lastErrorMsg = msg
+              // if msg not eq expectMsg then throw new SResultError(SErrorCrash(s"expect abort msg , but gtot ..on: $ex"))
+              println(s"Speedy.scala step catch block serr: SError.DamlEUserError(msg) is msg=$msg")
+              println(s"Speedy.scala.step  machine.lastErrorMsg=${lastErrorMsg}")
+              println(s"Speedy.scala.step machine.expectedAbortMsg=${expectedAbortMsg}")
+            case _ =>
+              println(s"Speedy.scala.step OTHER...")
           }
+
+
+          serr match {
+            case _: SErrorDamlException if tryHandleException => {
+              println(s"Speedy.scala.step returning SResultContinue")
+              SResultContinue
+            }
+
+            case _ => {
+              println(s"Speedy.scala.step returning SResultError(serr): ${SResultError(serr)}")
+              SResultError(serr)
+            }
+          }
+        }
 
         case ex: RuntimeException =>
           SResultError(SErrorCrash(s"exception: $ex"))
@@ -137,11 +170,17 @@ object Speedy {
     def tryHandleException(): Boolean = {
       val catchIndex =
         kont.asScala.lastIndexWhere(_.isInstanceOf[KCatch])
+
+      println(s"Speedy.scala tryHandleException: catchIndex=$catchIndex")
       if (catchIndex >= 0) {
+        // catch handler found so it means a catch block caught the exception. add this to the next control the machine
+        // should execute?
         val kcatch = kont.get(catchIndex).asInstanceOf[KCatch]
         kont.subList(catchIndex, kont.size).clear()
         env.subList(kcatch.envSize, env.size).clear()
         ctrl = CtrlExpr(kcatch.handler)
+        println(s"Speedy.scala tryHandleException kcatch = $kcatch")
+        println(s"Speedy.scala tryHandleException ctrl = $ctrl")
         true
       } else
         false
@@ -243,6 +282,8 @@ object Speedy {
         compiledPackages = compiledPackages,
         checkSubmitterInMaintainers = checkSubmitterInMaintainers,
         validating = false,
+        lastErrorMsg = null,
+        expectedAbortMsg = null
       )
 
     def newBuilder(
@@ -546,6 +587,7 @@ object Speedy {
   final case class KCatch(handler: SExpr, fin: SExpr, envSize: Int) extends Kont {
 
     def execute(v: SValue, machine: Machine) = {
+      println(s"Speedy.scala literally in KCatch, handler=$handler:  ")
       machine.ctrl = CtrlExpr(fin)
     }
   }

@@ -26,6 +26,7 @@ module DA.Internal.LF
   , Scenario
   , submit
   , submitMustFail
+  , submitMustFailMsg
   , scenario
 
   , HasTime
@@ -191,6 +192,10 @@ infixr 0 `submitMustFail`
 -- scenario fails if the underlying update action *succeeds*.
 submitMustFail : Party -> Update a -> Scenario ()
 submitMustFail = primitive @"SMustFailAt"
+
+infixr 0 `submitMustFailMsg`
+submitMustFailMsg : Party -> Text -> Update a -> Scenario ()
+submitMustFailMsg = primitive @"SMustFailAtMsg"
 
 -- | Declare you are building a scenario.
 scenario : Scenario a -> Scenario a

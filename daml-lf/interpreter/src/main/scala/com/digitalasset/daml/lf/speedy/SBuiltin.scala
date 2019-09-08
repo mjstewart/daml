@@ -1035,9 +1035,32 @@ object SBuiltin {
     }
   }
 
+  // TODO: simplify and make expectedAbortMsg an SText or something
   /** $endCommit[mustFail?] :: result -> Token -> () */
-  final case class SBSEndCommit(mustFail: Boolean) extends SBuiltin(2) {
+  final case class SBSEndCommitMustFailMsg(expectedAbortMsgE: SExpr) extends SBuiltin(2) {
     def execute(args: util.ArrayList[SValue], machine: Machine): Unit = {
+      // SELocation(Location(-homePackageId-,Demo,test_demo,(27,26),(27,33)),SEValue(SText(hello)))
+      println(s"SBSEndCommitMustFailMsg expectedAbortMsgE=$expectedAbortMsgE")
+      expectedAbortMsgE match {
+        case SELocation(_, SEValue(SText(expectedAbortMsg))) =>
+          println(s"SBSEndCommitMustFailMsg MATCH FOUND setting  machine.expectedAbortMsg expectedAbortMsg=$expectedAbortMsg")
+          machine.expectedAbortMsg = expectedAbortMsg
+
+        case _ =>
+          println(s"SBSEndCommitMustFailMsg NO!!! MATCH FOUND setting to No match 2")
+          machine.expectedAbortMsg = "SBSEndCommitMustFailMsg : No match 2"
+      }
+      SBSEndCommit(mustFail = true, inspectFailMsg = true).execute(args, machine)
+    }
+  }
+
+  /** $endCommit[mustFail?] :: result -> Token -> () */
+  final case class SBSEndCommit(mustFail: Boolean, inspectFailMsg: Boolean = false) extends SBuiltin(2) {
+    def execute(args: util.ArrayList[SValue], machine: Machine): Unit = {
+      println(s"SBSEndCommit: args=${args}")
+      println(s"SBSEndCommit: args.get(1)=${args.get(1)}")
+      println(s"SBSEndCommit: machine.ctrl=${machine.ctrl}")
+
       checkToken(args.get(1))
       if (mustFail) executeMustFail(args, machine)
       else executeCommit(args, machine)
@@ -1058,12 +1081,46 @@ object SBuiltin {
         machine.ptx = PartialTransaction.initial
       }
 
+      println(s"executeMustFail: args=$args")
+      println(s"executeMustFail: args.get(0)=${args.get(0)}")
+      println(s"executeMustFail: args.get(1)=${args.get(1)}")
+      println(s"executeMustFail: machine.ptx=${machine.ptx}")
+      println(s"executeMustFail: machine.ctrl=${machine.ctrl}")
+      println(s"executeMustFail: machine.env=${machine.env}")
+      println(s"executeMustFail: machine.lastErrorMsg=${machine.lastErrorMsg}")
+      println(s"executeMustFail: machine.expectedAbortMsg=${machine.expectedAbortMsg}")
+
+
       args.get(0) match {
         case SBool(true) =>
           // update expression threw an exception. we're
           // now done.
           clearCommit
           machine.ctrl = CtrlValue(SUnit(()))
+
+          println(s"executeMustFail SBool(true) - THROW -- SpeedyHungry(SResultScenarioInsertMustFail(committerOld, commitLocationOld)): ${SpeedyHungry(SResultScenarioInsertMustFail(committerOld, commitLocationOld))}")
+          // where does this go from here.
+          // 1. speedy.scala.step case SpeedyHungry(res: SResult) -> the result is the SResultScenarioInsertMustFail supplied here.
+          // 2. ScenarioRunner.runUnsafe SResultScenarioInsertMustFail:
+          // 3. eventually then ScenarioServiceMain.interpret scenario converts SResultScenarioInsertMustFail into a ScenarioError
+          // If think the logic should be to throw SResultScenarioMustFail like in the SBool(false) case if abort msg doesnt match
+
+          // TODO: refactor and try reuse SResultScenarioMustFail by adding optional default arg?
+          println(s"executeMustFail inspectFailMsg=$inspectFailMsg")
+
+          if (inspectFailMsg) {
+            if (machine.lastErrorMsg == null) {
+              crash(s"endCommit: inspecting fail message but there was no last error")
+//              println(s"executeMustFail machine.lastErrorMsg == null, need to handle this properly as its not expected")
+            }
+            else jjif (machine.lastErrorMsg != machine.expectedAbortMsg) {
+              val assertResult = AssertMsgResult(expected=machine.expectedAbortMsg, actual=machine.lastErrorMsg)
+              println(s"executeMustFail assertResult is not expected! = $assertResult")
+              throw SpeedyHungry(SResultScenarioMustFailMsg(assertResult))
+            }
+          }
+          println(s"executeMustFail throwing normal case: SResultScenarioInsertMustFail")
+
           throw SpeedyHungry(SResultScenarioInsertMustFail(committerOld, commitLocationOld))
 
         case SBool(false) =>
@@ -1076,6 +1133,9 @@ object SBuiltin {
               // fail when committed, so tell the scenario runner to
               // do that.
               machine.ctrl = CtrlValue(SUnit(()))
+
+              println(s"SBool(false) - THROW -- SpeedyHungry(SResultScenarioMustFail(tx, committerOld, _ => clearCommit)): ${SpeedyHungry(SResultScenarioMustFail(tx, committerOld, _ => clearCommit))}")
+
               throw SpeedyHungry(SResultScenarioMustFail(tx, committerOld, _ => clearCommit))
           }
         case v =>
@@ -1108,6 +1168,12 @@ object SBuiltin {
       )
     }
   }
+
+
+
+
+
+
 
   /** $pass :: Int64 -> Token -> Timestamp */
   final case object SBSPass extends SBuiltin(2) {

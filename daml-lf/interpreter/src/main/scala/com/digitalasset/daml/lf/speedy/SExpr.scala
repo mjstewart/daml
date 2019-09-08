@@ -85,6 +85,7 @@ object SExpr {
     */
   final case class SEApp(fun: SExpr, args: Array[SExpr]) extends SExpr with SomeArrayEquals {
     def execute(machine: Machine): Ctrl = {
+//      println(s"SEApp: fun=$fun, args=$args")
       machine.kont.add(KArg(args))
       CtrlExpr(fun)
     }
