@@ -569,6 +569,8 @@ convertTemplate env tplTypeCon tbinds@TemplateBinds{..}
         tplAgreement <- useSingleMethodDict env fAgreement (`ETmApp` EVar this)
         tplChoices <- convertChoices env tplTypeCon tbinds
         tplKey <- convertTemplateKey env tplTypeCon tbinds
+
+        -- unhandled (show (LF.unTypeConName tplTypeCon) <> ", choices = " <> show tplChoices) tplTyCon
         pure Template {..}
 
     | otherwise =
@@ -631,6 +633,7 @@ convertChoice env tbinds (ChoiceData ty expr)
           EUpdate $ UBind (Binding (res, choiceRetTy) update) $
           EUpdate $ UBind (Binding (mkVar "_", TUnit) archiveSelf) $
           EUpdate $ UPure choiceRetTy $ EVar res
+
     pure TemplateChoice
         { chcLocation = Nothing
         , chcName = choiceName

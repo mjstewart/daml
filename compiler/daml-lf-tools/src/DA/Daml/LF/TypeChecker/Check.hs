@@ -40,6 +40,7 @@ import           Data.Functor
 import Data.Generics.Uniplate.Data (para)
 import qualified Data.HashSet as HS
 import qualified Data.Map.Strict as Map
+import qualified Data.Text as T
 import           Safe.Exact (zipExactMay)
 
 import           DA.Daml.LF.Ast
@@ -635,12 +636,18 @@ checkDefValue (DefValue _loc (_, typ) _noParties (IsTest isTest) expr) = do
       _ -> throwWithContext (EExpectedScenarioType typ)
 
 checkTemplateChoice :: MonadGamma m => Qualified TypeConName -> TemplateChoice -> m ()
-checkTemplateChoice tpl (TemplateChoice _loc _ _ actors selfBinder (param, paramType) retType upd) = do
+checkTemplateChoice tpl (TemplateChoice _ chcName _ actors selfBinder (param, paramType) retType upd) = do
   checkType paramType KStar
   checkType retType KStar
   introExprVar param paramType $ checkExpr actors (TList TParty)
   introExprVar selfBinder (TContractId (TCon tpl)) $ introExprVar param paramType $
     checkExpr upd (TUpdate retType)
+
+  let choiceName = unChoiceName chcName
+      templateName = unTypeConName $ qualObject tpl
+
+  _todo
+
 
 checkTemplate :: MonadGamma m => Module -> Template -> m ()
 checkTemplate m t@(Template _loc tpl param precond signatories observers text choices mbKey) = do
@@ -654,7 +661,8 @@ checkTemplate m t@(Template _loc tpl param precond signatories observers text ch
     withPart TPObservers $ checkExpr observers (TList TParty)
     withPart TPAgreement $ checkExpr text TText
     for_ choices $ \c -> withPart (TPChoice c) $ checkTemplateChoice tcon c
-  whenJust mbKey $ checkTemplateKey param tcon
+    whenJust mbKey $ checkTemplateKey param tcon
+
   where
     withPart p = withContext (ContextTemplate m t p)
 

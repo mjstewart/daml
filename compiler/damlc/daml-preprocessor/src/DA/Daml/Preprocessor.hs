@@ -61,7 +61,7 @@ damlPreprocessor mbPkgName x
     | maybe False (isInternal ||^ (`elem` mayImportInternal)) name = noPreprocessor x
     | otherwise = IdePreprocessedSource
         { preprocWarnings = checkModuleName x
-        , preprocErrors = checkImports x ++ checkDataTypes x ++ checkModuleDefinition x
+        , preprocErrors = checkImports x ++ checkDataTypes x ++ checkModuleDefinition x ++ checkChoiceNames mbPkgName x
         , preprocSource = recordDotPreprocessor $ importDamlPreprocessor $ genericsPreprocessor mbPkgName $ enumTypePreprocessor "GHC.Types" x
         }
     where
@@ -117,6 +117,9 @@ checkImports x =
     [ (ss, "Import of internal module " ++ GHC.moduleNameString m ++ " is not allowed.")
     | GHC.L ss GHC.ImportDecl{ideclName=GHC.L _ m} <- GHC.hsmodImports $ GHC.unLoc x, isInternal m]
 
+checkChoiceNames :: Maybe String -> GHC.ParsedSource -> [(GHC.SrcSpan, String)]
+checkChoiceNames _ _ =
+  []
 
 checkDataTypes :: GHC.ParsedSource -> [(GHC.SrcSpan, String)]
 checkDataTypes m = checkAmbiguousDataTypes m ++ checkUnlabelledConArgs m ++ checkThetas m
